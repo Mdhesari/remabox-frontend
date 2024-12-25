@@ -1,18 +1,23 @@
 import { Mail, ArrowRight, Globe2, Sparkles, Target, Box } from 'lucide-react';
 import { useState } from 'react';
+import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription } from './components/ui/toast';
 
 function App() {
   const [email, setEmail] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle newsletter signup
     console.log('Email submitted:', email);
+    setShowToast(true);
     setEmail('');
+    setTimeout(() => setShowToast(false), 3000); // Hide toast after 3 seconds
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <ToastProvider>
+      <div dir="rtl" className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-16 md:py-32">
         <div className="max-w-4xl mx-auto text-center">
           {/* Logo & Brand */}
@@ -84,7 +89,20 @@ function App() {
           </div>
         </div>
       </div>
-    </div>
+
+        <ToastViewport />
+        {showToast && (
+          <Toast className="bg-gradient-to-r from-blue-500 to-violet-500 text-white border-none">
+            <div className="flex flex-col items-start gap-1">
+              <ToastTitle className="text-lg font-bold">ثبت‌نام موفق</ToastTitle>
+              <ToastDescription className="text-sm">
+                ایمیل شما با موفقیت ثبت شد. از اشتیاق شما برای همراهی با ما سپاسگزاریم!
+              </ToastDescription>
+            </div>
+          </Toast>
+        )}
+      </div>
+    </ToastProvider>
   );
 }
 
