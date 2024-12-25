@@ -1,35 +1,45 @@
 import { Mail, ArrowRight, Globe2, Sparkles, Target, Box } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ToastProvider, ToastViewport, Toast, ToastTitle, ToastDescription } from './components/ui/toast';
-import { GoogleReCaptchaProvider, useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import ReCAPTCHA from 'react-google-recaptcha';
+import React from 'react';
 
 function AppContent() {
   const [email, setEmail] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState({ title: '', description: '' });
-  const { executeRecaptcha } = useGoogleReCaptcha();
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!executeRecaptcha) {
-      console.log('Execute recaptcha not yet available');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const token = await executeRecaptcha('email_submission');
+      if (!recaptchaRef.current) {
+        throw new Error('reCAPTCHA not initialized');
+      }
+
+      const token = await recaptchaRef.current.executeAsync();
+
+      if (!token) {
+        console.error('ReCAPTCHA execution failed: Token is null');
+        setToastMessage({
+          title: 'خطا در اعتبارسنجی',
+          description: 'مشکلی در فرآیند اعتبارسنجی رخ داد. لطفاً صفحه را رفرش کرده و دوباره تلاش کنید.',
+        });
+        setIsLoading(false);
+        setShowToast(true);
+        return;
+      }
 
       // Simulated API call
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/subscribe`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/newsletter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, recaptchaToken: token }),
+        body: JSON.stringify({ email, recaptcha_token: token }),
       });
 
       if (!response.ok) {
@@ -104,6 +114,11 @@ function AppContent() {
                 به‌زودی اتفاقی شگفت‌انگیز در راه است
               </h2>
               <form onSubmit={handleSubmit} className="flex gap-2">
+                <ReCAPTCHA
+                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+                  size="invisible"
+                  ref={recaptchaRef}
+                />
                 <button
                   type="submit"
                   className={`px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-violet-500 text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''
@@ -155,11 +170,8 @@ function AppContent() {
 
 function App() {
   return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-    >
-      <AppContent />
-    </GoogleReCaptchaProvider>
+
+    <AppContent />
   );
 }
 
