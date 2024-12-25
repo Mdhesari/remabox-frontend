@@ -34,7 +34,7 @@ function AppContent() {
       }
 
       // Simulated API call
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/newsletter`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/v1/newsletter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
